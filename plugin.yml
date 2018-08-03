@@ -1,0 +1,12 @@
+name: Locksmith
+main: io.github.bananapuncher714.locksmith.Locksmith
+version: 1.0
+author: BananaPuncher714
+commands:
+    lock:
+        description: Locks containers
+permissions:
+    locksmith.use:
+        default: true
+    locksmith.admin:
+        default: op
