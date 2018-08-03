@@ -22,7 +22,7 @@ public class Locksmith extends JavaPlugin {
 	public static final String[] KEYS = new String[] { "Locksmith", "key" };
 	public static final String BLANK_KEY = ChatColor.WHITE + "Blank Key";
 	public static final String KEY = ChatColor.WHITE + "Key";
-	
+
 	@Override
 	public List< String > onTabComplete( CommandSender sender, Command command, String label, String[] args ) {
 		List< String > aos = new ArrayList< String >();
@@ -36,7 +36,7 @@ public class Locksmith extends JavaPlugin {
 				aos.add( "getlock" );
 			}
 		}
-		
+
 		StringUtil.copyPartialMatches( args[ args.length - 1 ], aos, completions );
 		Collections.sort( completions );
 		return completions;
@@ -99,29 +99,33 @@ public class Locksmith extends JavaPlugin {
 			} else if ( args[ 0 ].equalsIgnoreCase( "unlock" ) ) {
 				Block block = player.getTargetBlock( ( Set< Material > ) null, 4 );
 				ItemStack item = player.getItemInHand();
-				String blockLock = getLock( block );
-				if ( blockLock == null || blockLock.isEmpty() ) {
-					player.sendMessage( ChatColor.RED + "You cannot unlock an unlocked container!" );
-				} else {
-					if ( isKey( item ) ) {
-						if ( isBlankKey( item ) ) {
-							player.sendMessage( ChatColor.RED + "You cannot use a blank key to unlock this container!" );
-						} else {
-							ItemMeta meta = item.getItemMeta();
-							String lock = meta.getDisplayName();
-							if ( lock == null ) {
-								throw new NullPointerException( "Key name cannot be null!" );
-							}
-							if ( blockLock.equalsIgnoreCase( lock ) ) {
-								setLock( block, "" );
-								player.sendMessage( "You have unlocked this block!" );
-							} else {
-								player.sendMessage( ChatColor.RED + "You must be holding the right lock to unlock!" );
-							}
-						}
+				if ( block.getState() instanceof InventoryHolder ) {
+					String blockLock = getLock( block );
+					if ( blockLock == null || blockLock.isEmpty() ) {
+						player.sendMessage( ChatColor.RED + "You cannot unlock an unlocked container!" );
 					} else {
-						player.sendMessage( ChatColor.RED + "You must be holding a key!" );
+						if ( isKey( item ) ) {
+							if ( isBlankKey( item ) ) {
+								player.sendMessage( ChatColor.RED + "You cannot use a blank key to unlock this container!" );
+							} else {
+								ItemMeta meta = item.getItemMeta();
+								String lock = meta.getDisplayName();
+								if ( lock == null ) {
+									throw new NullPointerException( "Key name cannot be null!" );
+								}
+								if ( blockLock.equalsIgnoreCase( lock ) ) {
+									setLock( block, "" );
+									player.sendMessage( "You have unlocked this block!" );
+								} else {
+									player.sendMessage( ChatColor.RED + "You must be holding the right lock to unlock!" );
+								}
+							}
+						} else {
+							player.sendMessage( ChatColor.RED + "You must be holding a key!" );
+						}
 					}
+				} else {
+					player.sendMessage( ChatColor.RED + "You can only unlock containers!" );
 				}
 			} else if ( args[ 0 ].equalsIgnoreCase( "getlock" ) ) {
 				if ( player.hasPermission( "locksmith.admin" ) ) {
@@ -145,25 +149,25 @@ public class Locksmith extends JavaPlugin {
 		}
 		return false;
 	}
-	
+
 	public static String getLock( Block block ) {
 		Object val = NBTEditor.getBlockTag( block, "Lock" );
 		return val != null ? ( String ) val : null;
 	}
-	
+
 	public static void setLock( Block block, String lock ) {
 		NBTEditor.setBlockTag( block, lock, "Lock" );
 	}
-	
+
 	public static ItemStack getBlankKey() {
 		ItemStack item = new ItemStack( Material.TRIPWIRE_HOOK );
 		ItemMeta meta = item.getItemMeta();
 		meta.setDisplayName( BLANK_KEY );
 		item.setItemMeta( meta );
-		
+
 		return NBTEditor.setItemTag( item, ( byte ) 0, ( Object[] ) KEYS );
 	}
-	
+
 	public static ItemStack fillKey( ItemStack item ) {
 		if ( !isKey( item ) ) {
 			return item;
@@ -171,11 +175,11 @@ public class Locksmith extends JavaPlugin {
 			return NBTEditor.setItemTag( item, ( byte ) 1, ( Object[] ) KEYS );
 		}
 	}
-	
+
 	public static boolean isKey( ItemStack item ) {
 		return NBTEditor.getItemTag( item, ( Object[] ) KEYS ) != null;
 	}
-	
+
 	public static boolean isBlankKey( ItemStack item ) {
 		Object key = NBTEditor.getItemTag( item, ( Object[] ) KEYS );
 		if ( key == null ) {
@@ -184,11 +188,11 @@ public class Locksmith extends JavaPlugin {
 		byte val = ( byte ) key;
 		return val == 0;
 	}
-	
+
 	public static String generateKey() {
 		return UUID.randomUUID().toString();
 	}
-	
+
 	public static String legacyEncode( String value ) {
 		StringBuilder builder = new StringBuilder();
 		for ( char ch : value.toCharArray() ) {
